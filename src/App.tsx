@@ -971,7 +971,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 h-20 sm:h-28 overflow-hidden shadow-md">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 h-24 sm:h-32 overflow-hidden shadow-md">
         <BannerBranding fileId={bannerFileId} />
         
         {/* Action Buttons & User Info - Top Right */}
@@ -986,28 +986,46 @@ export default function App() {
           >
             <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
-          <button 
-            onClick={handleLogout} 
-            className="p-1.5 sm:p-2 bg-white/40 hover:bg-red-50 backdrop-blur-md rounded-full shadow-sm border border-white/40 transition-all group"
-            title="Logout"
-          >
-            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-800 group-hover:text-red-600" />
-          </button>
         </div>
 
-        {/* Brand Elements - Logo and Name Stacked */}
-        <div className="relative z-10 px-3 sm:px-6 pt-1.5 sm:pt-3 flex flex-col items-start gap-1">
-          <LogoBranding 
-            fileId={logoFileId} 
-            className="w-8 h-8 sm:w-12 sm:h-12 shadow-md rounded-lg border border-white/40" 
-          />
-          <h1 className="text-[10px] sm:text-sm font-black text-gray-900 tracking-tighter drop-shadow-md uppercase -ml-1">
-            Mehedy Telecom
-          </h1>
+        {/* Brand Elements - Logo, Name, and Search Stacked */}
+        <div className="relative z-10 px-3 sm:px-6 pt-3 sm:pt-5 flex flex-col items-start gap-1 bg-transparent">
+          <div className="flex items-center gap-2">
+            <LogoBranding 
+              fileId={logoFileId} 
+              className="w-7 h-7 sm:w-10 sm:h-10 shadow-md rounded-lg border border-white/40" 
+            />
+            <h1 className="text-[10px] sm:text-sm font-black text-gray-900 tracking-tighter drop-shadow-md uppercase">
+              Mehedy Telecom
+            </h1>
+          </div>
+          
+          {/* Compact Quick Search Bar below Logo */}
+          <div className="max-w-[130px] sm:max-w-[200px] w-full mt-1.5 sm:mt-2.5">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input 
+                type="text"
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                placeholder="Search products..."
+                className="w-full pl-8 pr-12 py-1 sm:py-1.5 rounded-xl border border-white/40 bg-white/70 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 outline-none text-[10px] sm:text-xs transition-all font-semibold text-gray-900 placeholder:text-gray-400 shadow-sm"
+              />
+              {productSearch && (
+                <button 
+                  onClick={() => setProductSearch('')}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] font-extrabold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-1 py-0.5 rounded transition-all"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <main className="max-w-7xl mx-auto px-4 pt-3 pb-6 sm:pt-4 sm:pb-8">
+
         {/* Summary Card */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-8">
