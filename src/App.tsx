@@ -21,7 +21,8 @@ import {
   Edit2,
   BarChart3,
   ArrowDownCircle,
-  Clock
+  Clock,
+  Percent
 } from 'lucide-react';
 import { animate, motion, AnimatePresence } from 'motion/react';
 import { 
@@ -304,6 +305,12 @@ export default function App() {
   const [isMonthlyReportOpen, setIsMonthlyReportOpen] = useState(false);
   const [isMobileBazarOpen, setIsMobileBazarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEmiOpen, setIsEmiOpen] = useState(false);
+  const [emiProductId, setEmiProductId] = useState('');
+  const [emiDownPayment, setEmiDownPayment] = useState('');
+  const [emiInterestRate, setEmiInterestRate] = useState('');
+  const [emiServiceCharge, setEmiServiceCharge] = useState('');
+  const [emiMonths, setEmiMonths] = useState(3);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [editSaleImages, setEditSaleImages] = useState<File[]>([]);
@@ -522,6 +529,31 @@ export default function App() {
       mobileBazarTotal
     };
   }, [sales, products, mobileBazarRecords, currentMonthTotal, calculateDynamicProfit]);
+
+  const emiCalculation = useMemo(() => {
+    const selectedProd = products.find(p => p.id === emiProductId);
+    const originalPrice = selectedProd ? selectedProd.selling_price : 0;
+    const downPayment = parseFloat(emiDownPayment) || 0;
+    const interestRate = parseFloat(emiInterestRate) || 0;
+    const serviceCharge = parseFloat(emiServiceCharge) || 0;
+    const months = emiMonths;
+
+    const principal = Math.max(0, originalPrice - downPayment);
+    const interestAmount = principal * (interestRate / 100);
+    const totalWithInterest = principal + interestAmount + serviceCharge;
+    const monthlyEmi = months > 0 ? (totalWithInterest / months) : 0;
+
+    return {
+      originalPrice,
+      downPayment,
+      interestRate,
+      serviceCharge,
+      principal,
+      interestAmount,
+      totalWithInterest,
+      monthlyEmi,
+    };
+  }, [emiProductId, emiDownPayment, emiInterestRate, emiServiceCharge, emiMonths, products]);
 
   // Actions
   const handleDeleteProduct = async (id: string) => {
@@ -1019,6 +1051,19 @@ export default function App() {
                 className="flex items-center justify-center gap-2 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200"
               >
                 <ArrowDownCircle className="w-5 h-5" /> Mobile Bazar
+              </button>
+              <button 
+                onClick={() => {
+                  setEmiProductId('');
+                  setEmiDownPayment('');
+                  setEmiInterestRate('');
+                  setEmiServiceCharge('');
+                  setEmiMonths(3);
+                  setIsEmiOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100"
+              >
+                <Percent className="w-5 h-5" /> EMI Calculator
               </button>
             </div>
 
@@ -1866,6 +1911,152 @@ export default function App() {
                 <p className="text-center py-4 text-gray-400 text-sm">No records yet.</p>
               )}
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* EMI Calculator Modal */}
+      <Modal 
+        isOpen={isEmiOpen} 
+        onClose={() => setIsEmiOpen(false)} 
+        title="EMI Calculator"
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Select Product Model</label>
+              <select 
+                value={emiProductId}
+                onChange={e => setEmiProductId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-gray-900"
+              >
+                <option value="">Select a product...</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.ram || p.rom ? `(${p.ram || ''}/${p.rom || ''})` : ''} - ৳{p.selling_price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Down Payment (৳)</label>
+                <input 
+                  type="number"
+                  value={emiDownPayment}
+                  onChange={e => setEmiDownPayment(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Interest Rate (%)</label>
+                <input 
+                  type="number"
+                  value={emiInterestRate}
+                  onChange={e => setEmiInterestRate(e.target.value)}
+                  placeholder="e.g. 5"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Service Charge (৳)</label>
+                <input 
+                  type="number"
+                  value={emiServiceCharge}
+                  onChange={e => setEmiServiceCharge(e.target.value)}
+                  placeholder="e.g. 500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 font-medium"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 font-sans">EMI Period (Months)</label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[1, 2, 3, 4, 5, 6].map((month) => (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() => setEmiMonths(month)}
+                    className={`py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border ${
+                      emiMonths === month
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {month} {month === 1 ? 'Month' : 'Months'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {emiProductId ? (
+            <div className="mt-6 border-t border-gray-100 pt-6 space-y-4">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest text-center mb-1 font-sans">Calculation Details</h3>
+              
+              <div className="bg-gray-50/50 rounded-2xl border border-gray-100 p-4 sm:p-5 space-y-2.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Product Price:</span>
+                  <span className="font-bold text-gray-900">৳{emiCalculation.originalPrice.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Down Payment:</span>
+                  <span className="font-bold text-red-500">- ৳{emiCalculation.downPayment.toLocaleString()}</span>
+                </div>
+
+                <div className="h-px bg-gray-200/50 my-1" />
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Remaining Principal:</span>
+                  <span className="font-semibold text-gray-950 font-mono">৳{emiCalculation.principal.toLocaleString()}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Interest ({emiCalculation.interestRate}%):</span>
+                  <span className="font-bold text-orange-600">+ ৳{emiCalculation.interestAmount.toLocaleString()}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Service Charge:</span>
+                  <span className="font-bold text-emerald-600">+ ৳{emiCalculation.serviceCharge.toLocaleString()}</span>
+                </div>
+
+                <div className="h-px bg-gray-200/50 my-1" />
+
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-indigo-900 font-bold">Total Amount to Pay:</span>
+                  <span className="font-black text-indigo-900 font-mono text-base">৳{emiCalculation.totalWithInterest.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="bg-indigo-50/70 rounded-2xl border border-indigo-100/50 p-5 text-center shadow-inner">
+                <p className="text-xs uppercase font-black text-indigo-500 tracking-wider mb-1">Monthly EMI ({emiMonths} {emiMonths === 1 ? 'Month' : 'Months'})</p>
+                <p className="text-3xl font-black text-indigo-600">
+                  ৳{Math.round(emiCalculation.monthlyEmi).toLocaleString()} 
+                  <span className="text-sm font-medium text-indigo-400 ml-1">/ month</span>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6 text-gray-400 italic text-sm">
+              Please select a product model to calculate EMI
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button 
+              type="button" 
+              onClick={() => setIsEmiOpen(false)}
+              className="px-6 py-3 bg-gray-100 font-bold hover:bg-gray-200 text-gray-700 rounded-xl transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       </Modal>
