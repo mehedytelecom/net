@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+         (request.auth.token.email == "mehedyhossain160619@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.purchase_price is number && data.purchase_price >= 0 &&
+             data.selling_price is number && data.selling_price >= 0 &&
+             data.profit_margin is number &&
+             data.quantity is number &&
+             (!('ram' in data) || data.ram is string) &&
+             (!('rom' in data) || data.rom is string) &&
+             data.created_at is string;
+    }
+
+    function isValidSale(data) {
+      return data.customer_name is string && data.customer_name.size() > 0 &&
+             data.phone_number is string &&
+             data.nid_number is string &&
+             data.address is string &&
+             (!('guarantor_number' in data) || data.guarantor_number is string) &&
+             data.product_id is string &&
+             data.product_name is string &&
+             (!('ram' in data) || data.ram is string) &&
+             (!('rom' in data) || data.rom is string) &&
+             data.image_file_ids is list &&
+             data.sale_date is string &&
+             data.profit is number;
+    }
+
+    function isValidMobileBazar(data) {
+      return data.sale_id is string &&
+             data.customer_name is string &&
+             data.product_name is string &&
+             (!('ram' in data) || data.ram is string) &&
+             (!('rom' in data) || data.rom is string) &&
+             data.down_payment is number &&
+             data.sale_profit is number &&
+             data.net_amount is number &&
+             data.created_at is string;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        request.auth.token.email == "mehedyhossain160619@gmail.com" && 
+        request.auth.token.email_verified == true;
+    }
+
+    function isValidSettings(data) {
+      return (!('banner_file_id' in data) || (data.banner_file_id is string && data.banner_file_id.size() < 100)) &&
+             (!('logo_file_id' in data) || (data.logo_file_id is string && data.logo_file_id.size() < 100));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /products/{productId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /mobile_bazar/{recordId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}

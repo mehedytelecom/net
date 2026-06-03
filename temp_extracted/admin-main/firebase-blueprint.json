@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A product in the inventory",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the product" },
+        "purchase_price": { "type": "number", "description": "Wholesale price" },
+        "selling_price": { "type": "number", "description": "Retail price" },
+        "profit_margin": { "type": "number", "description": "Profit per piece" },
+        "quantity": { "type": "number", "description": "Current stock" },
+        "ram": { "type": "string", "description": "RAM size" },
+        "rom": { "type": "string", "description": "ROM size" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "purchase_price", "selling_price", "profit_margin", "quantity", "created_at"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A recorded sale transaction",
+      "type": "object",
+      "properties": {
+        "customer_name": { "type": "string" },
+        "phone_number": { "type": "string" },
+        "nid_number": { "type": "string" },
+        "address": { "type": "string" },
+        "guarantor_number": { "type": "string" },
+        "product_id": { "type": "string" },
+        "product_name": { "type": "string" },
+        "ram": { "type": "string" },
+        "rom": { "type": "string" },
+        "image_file_ids": { "type": "array", "items": { "type": "string" } },
+        "sale_date": { "type": "string", "format": "date-time" },
+        "profit": { "type": "number" }
+      },
+      "required": ["customer_name", "phone_number", "nid_number", "address", "product_id", "product_name", "image_file_ids", "sale_date", "profit"]
+    },
+    "MobileBazarRecord": {
+      "title": "MobileBazarRecord",
+      "description": "A record for Mobile Bazar hisab",
+      "type": "object",
+      "properties": {
+        "sale_id": { "type": "string" },
+        "customer_name": { "type": "string" },
+        "product_name": { "type": "string" },
+        "ram": { "type": "string" },
+        "rom": { "type": "string" },
+        "down_payment": { "type": "number" },
+        "sale_profit": { "type": "number" },
+        "net_amount": { "type": "number" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sale_id", "customer_name", "product_name", "down_payment", "sale_profit", "net_amount", "created_at"]
+    },
+    "ShopSettings": {
+      "title": "ShopSettings",
+      "description": "Shop branding and settings",
+      "type": "object",
+      "properties": {
+        "banner_file_id": { "type": "string" },
+        "logo_file_id": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Collection of products"
+    },
+    "sales": {
+      "schema": "Sale",
+      "description": "Collection of sales"
+    },
+    "mobile_bazar": {
+      "schema": "MobileBazarRecord",
+      "description": "Collection of Mobile Bazar records"
+    },
+    "settings": {
+      "schema": "ShopSettings",
+      "description": "Shop settings like branding banner"
+    }
+  }
+}
