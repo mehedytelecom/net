@@ -347,6 +347,7 @@ export default function App() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saleSearch, setSaleSearch] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -396,10 +397,12 @@ export default function App() {
   }, [user]);
 
   const handleLogin = async () => {
+    setLoginError(null);
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      setLoginError(error?.message || String(error));
     }
   };
 
@@ -868,6 +871,62 @@ export default function App() {
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
             Sign in with Google
           </button>
+
+          {loginError && (
+            <div className="mt-6 text-left p-4 bg-red-50 rounded-2xl border border-red-200 text-xs text-red-800 max-h-[350px] overflow-y-auto">
+              <p className="font-bold mb-2">লগইন ব্যর্থ হয়েছে (Error):</p>
+              <p className="mb-3 font-mono text-[11px] bg-red-100/50 p-2 rounded break-all">{loginError}</p>
+              
+              {loginError.includes('unauthorized-domain') && (
+                <div className="mt-2 space-y-2 text-gray-700 leading-relaxed border-t border-red-200 pt-2 text-[11px]">
+                  <p className="font-bold text-red-900">এই সমস্যাটি সমাধান করার নিয়মাবলী:</p>
+                  <p className="text-[11px] text-gray-600 leading-normal">আপনার Firebase প্রজেক্টে এই ডোমেনটি (Authorized Domain) হিসেবে যুক্ত করা নেই। নিচের ধাপগুলো অনুসরণ করে ডোমেনটি যোগ করুন:</p>
+                  
+                  <ol className="list-decimal pl-4 space-y-2 text-gray-600 leading-normal">
+                    <li>
+                      <a 
+                        href="https://console.firebase.google.com/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-600 underline font-semibold hover:text-blue-800"
+                      >
+                        Firebase Console
+                      </a> এ যান।
+                    </li>
+                    <li>
+                      আপনার প্রজেক্টটি নির্বাচন করুন: <strong className="font-mono bg-gray-100 px-1 py-0.5 rounded text-red-700 font-bold border border-gray-200">gen-lang-client-0938975347</strong> (অথবা আপনার নিজস্ব Firebase Project)।
+                    </li>
+                    <li>
+                      বাম দিকের মেনু থেকে <strong>Authentication</strong> এ ক্লিক করুন এবং ওপরের <strong>Settings</strong> ট্যাবে যান।
+                    </li>
+                    <li>
+                      বাম দিকের মেনু থেকে <strong>Authorized domains</strong> অপশনটি ক্লিক করুন।
+                    </li>
+                    <li>
+                      <strong>Add domain</strong> বাটনে ক্লিক করে নিচের ডোমেনগুলো একটি একটি করে কপি করে যুক্ত করুন:
+                      <div className="mt-2 space-y-1.5 font-mono text-[10px] text-gray-700">
+                        <div className="flex items-center justify-between bg-white p-1.5 rounded border border-gray-200">
+                          <span className="select-all">ais-dev-xv6utfdycqrlwov4jqc6jm-678386808054.asia-east1.run.app</span>
+                        </div>
+                        <div className="flex items-center justify-between bg-white p-1.5 rounded border border-gray-200">
+                          <span className="select-all">ais-pre-xv6utfdycqrlwov4jqc6jm-678386808054.asia-east1.run.app</span>
+                        </div>
+                        {typeof window !== 'undefined' && window.location.hostname && (
+                          <div className="flex items-center justify-between bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200">
+                            <span className="select-all">{window.location.hostname}</span>
+                            <span className="text-[8px] bg-emerald-200 px-1 rounded uppercase font-bold text-emerald-800">Current</span>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                    <li>
+                      উভয় ডোমেন অ্যাড করার পর, এই পেজটি রিফ্রেশ (Refresh) করুন এবং পুনরায় Google দিয়ে লগইন করার চেষ্টা করুন।
+                    </li>
+                  </ol>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
       </div>
     );
