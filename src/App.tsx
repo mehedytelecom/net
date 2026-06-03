@@ -21,7 +21,8 @@ import {
   Edit2,
   BarChart3,
   ArrowDownCircle,
-  Clock
+  Clock,
+  Calculator
 } from 'lucide-react';
 import { animate, motion, AnimatePresence } from 'motion/react';
 import { 
@@ -309,6 +310,13 @@ export default function App() {
   const [editSaleImages, setEditSaleImages] = useState<File[]>([]);
   const [bannerFileId, setBannerFileId] = useState<string | null>(null);
   const [logoFileId, setLogoFileId] = useState<string | null>(null);
+
+  // EMI Calculator States
+  const [isEmiCalculatorOpen, setIsEmiCalculatorOpen] = useState(false);
+  const [emiProductId, setEmiProductId] = useState('');
+  const [emiDownPayment, setEmiDownPayment] = useState('');
+  const [emiInterestRate, setEmiInterestRate] = useState('');
+  const [emiMonths, setEmiMonths] = useState(6);
 
   // Form States
   const [productSearch, setProductSearch] = useState('');
@@ -842,6 +850,29 @@ export default function App() {
     return { profit, downPayment, net };
   }, [newMobileBazar, sales, calculateDynamicProfit]);
 
+  const emiCalculationResult = useMemo(() => {
+    const product = products.find(p => p.id === emiProductId);
+    if (!product) return null;
+
+    const basePrice = product.selling_price;
+    const downPayment = Number(emiDownPayment) || 0;
+    const remainingPrincipal = Math.max(0, basePrice - downPayment);
+    const interestRate = Number(emiInterestRate) || 0;
+    const interestAmount = remainingPrincipal * (interestRate / 100);
+    const totalPayable = remainingPrincipal + interestAmount;
+    const monthlyEmi = emiMonths > 0 ? (totalPayable / emiMonths) : totalPayable;
+
+    return {
+      basePrice,
+      downPayment,
+      remainingPrincipal,
+      interestRate,
+      interestAmount,
+      totalPayable,
+      monthlyEmi
+    };
+  }, [products, emiProductId, emiDownPayment, emiInterestRate, emiMonths]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -960,6 +991,12 @@ export default function App() {
                 className="flex items-center justify-center gap-2 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200"
               >
                 <ArrowDownCircle className="w-5 h-5" /> Mobile Bazar
+              </button>
+              <button 
+                onClick={() => setIsEmiCalculatorOpen(true)}
+                className="flex items-center justify-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100"
+              >
+                <Calculator className="w-5 h-5" /> EMI Calculator
               </button>
             </div>
 
@@ -2227,6 +2264,146 @@ export default function App() {
                 This banner will be displayed in the header branding area.
               </p>
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* EMI Calculator Modal */}
+      <Modal 
+        isOpen={isEmiCalculatorOpen} 
+        onClose={() => setIsEmiCalculatorOpen(false)} 
+        title="EMI Calculator"
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Select Product Model</label>
+              <select 
+                value={emiProductId}
+                onChange={e => setEmiProductId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+              >
+                <option value="">-- Choose a product model --</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.ram ? `(${p.ram}/${p.rom})` : ''} - ৳{p.selling_price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {emiProductId && emiCalculationResult && (
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-200 flex-shrink-0">
+                  {products.find(p => p.id === emiProductId)?.image_file_id ? (
+                    <TelegramImage fileId={products.find(p => p.id === emiProductId)!.image_file_id!} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-6 h-6 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">{products.find(p => p.id === emiProductId)?.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {products.find(p => p.id === emiProductId)?.ram}/{products.find(p => p.id === emiProductId)?.rom}
+                  </p>
+                  <p className="text-sm font-black text-blue-600 mt-1">৳{products.find(p => p.id === emiProductId)?.selling_price.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Down Payment (৳)</label>
+                <input 
+                  type="number"
+                  value={emiDownPayment}
+                  onChange={e => setEmiDownPayment(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Enter down payment amount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Interest Rate (%)</label>
+                <input 
+                  type="number"
+                  value={emiInterestRate}
+                  onChange={e => setEmiInterestRate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="e.g. 5, 10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Duration (Months)</label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[1, 2, 3, 4, 5, 6].map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setEmiMonths(m)}
+                    className={`py-3 rounded-xl font-bold transition-all border text-sm ${
+                      emiMonths === m 
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {m} Month{m > 1 ? 's' : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {emiCalculationResult && (
+            <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 shadow-sm space-y-4">
+              <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-100/50 pb-2">EMI Calculation Breakdown</h4>
+              
+              <div className="grid grid-cols-2 gap-y-3 text-sm">
+                <span className="text-gray-600">Product Selling Price:</span>
+                <span className="font-bold text-right text-gray-900">৳{emiCalculationResult.basePrice.toLocaleString()}</span>
+
+                <span className="text-gray-600">Down Payment Amount:</span>
+                <span className="font-bold text-right text-orange-600">- ৳{emiCalculationResult.downPayment.toLocaleString()}</span>
+
+                <span className="text-gray-600">Remaining Amount (Principal):</span>
+                <span className="font-bold text-right text-gray-950">৳{emiCalculationResult.remainingPrincipal.toLocaleString()}</span>
+
+                <span className="text-gray-600">Interest Added ({emiCalculationResult.interestRate}%):</span>
+                <span className="font-bold text-right text-blue-600">+ ৳{emiCalculationResult.interestAmount.toLocaleString()}</span>
+
+                <div className="col-span-2 h-px bg-indigo-100/50 my-1" />
+
+                <span className="text-base font-bold text-indigo-950">Total Payable Amount:</span>
+                <span className="text-base font-black text-right text-indigo-900">৳{emiCalculationResult.totalPayable.toLocaleString()}</span>
+              </div>
+
+              <div className="bg-indigo-600 text-white rounded-xl p-4 text-center shadow-lg shadow-indigo-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1">Monthly Installment ({emiMonths} Month{emiMonths > 1 ? 's' : ''})</p>
+                <p className="text-3xl font-black">৳{Math.round(emiCalculationResult.monthlyEmi).toLocaleString()}</p>
+                <p className="text-[10px] text-indigo-100 mt-1">Exact: ৳{emiCalculationResult.monthlyEmi.toFixed(2)}/month</p>
+              </div>
+            </div>
+          )}
+
+          {!emiCalculationResult && (
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+              <Calculator className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 font-medium">Please select a product model to calculate EMI</p>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setIsEmiCalculatorOpen(false)}
+              className="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Close Calculator
+            </button>
           </div>
         </div>
       </Modal>
